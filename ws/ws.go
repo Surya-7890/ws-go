@@ -2,6 +2,7 @@ package ws
 
 import (
 	"fmt"
+	"math/rand"
 	"net"
 	"strings"
 )
@@ -10,7 +11,12 @@ var ActivePeers = make(map[string]net.Conn)
 
 var InvertedPeers = make(map[net.Conn]string)
 
-var Rooms = make(map[string][]net.Conn)
+var Rooms = make(map[string]Room)
+
+type Room struct {
+	Id    int
+	Peers []Peer
+}
 
 type Peer struct {
 	username string
@@ -42,11 +48,13 @@ func NewPeer(username string, conn net.Conn) (*Peer, error) {
 * @param name - represents the name of the room
  */
 func (p *Peer) NewRoom(name string) {
-	if _, ok := Rooms[name]; ok {
-		Rooms[name] = append(Rooms[name], p.conn)
-		return
+	id := int(rand.Intn(100))
+	newRoom := &Room{
+		Id:    id,
+		Peers: []Peer{},
 	}
-	Rooms[name] = []net.Conn{p.conn}
+	newRoom.Peers = append(newRoom.Peers, *p)
+	Rooms[name] = *newRoom
 }
 
 func SendPrivateMessage(sender, receiver string, message []string) error {
